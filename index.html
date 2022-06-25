@@ -7,6 +7,7 @@
     <title>delme-webgl-2020</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
+    <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
   </head>
   <body class="dark">
     <div id="unity-container" class="unity-desktop">
@@ -67,6 +68,7 @@
 
       const script = document.createElement("script");
       script.src = loaderUrl;
+      var unityI = null;
       script.onload = () => {
         createUnityInstance(canvas, config, (progress) => {
           spinner.style.display = "none";
@@ -75,6 +77,7 @@
         }).then((unityInstance) => {
           loadingCover.style.display = "none";
           if (canFullscreen) {
+            unityI = unityInstance;
             if (!hideFullScreenButton) {
               fullscreenButton.style.display = "";
             }
@@ -87,6 +90,46 @@
         });
       };
       document.body.appendChild(script);
+    </script>
+    <script type="text/javascript">
+      vkBridge.send('VKWebAppInit');
+
+
+      function getFrend(){
+        vkBridge.send("VKWebAppShowInviteBox", {})
+         .then(data => console.log(data.success))  
+        .catch(error => console.log(error));
+      }
+
+      function auth(){
+        vkBridge.send('VKWebAppGetUserInfo').then(_info =>{
+          console.log(_info);
+          unityI.SendMessage('VKSDK', 'AuthenticateSuccess', JSON.stringify(_info));
+        });
+      }
+
+      function getUserData(){
+        vkBridge.send("VKWebAppStorageGet",{"keys":["_save"]}).then(data =>{
+        console.log(data);
+        unityI.SendMessage('VKSDK', 'DataGetting', JSON.stringify(data));
+      });}
+
+      function setUserData(data){
+        console.log(data);
+        vkBridge.send('VKWebAppStorageSet',{"key": "_save" , "value": data}).then(_info =>{
+          console.log("Saved!")});
+      }
+
+      function showFullscrenAd(){
+        vkBridge.send('VKWebAppShowNativeAds',{ad_format:"interstitial"}).then(data => {
+          console.log(data);});
+      }
+
+      function showRewardedAd(){
+        vkBridge.send('VKWebAppShowNativeAds',{ad_format:"reward"}).then(data => {
+          console.log(data);
+          unityI.SendMessage('VKSDK', 'RewardGetting',JSON.stringify(data.result));})
+      }
     </script>
   </body>
 </html>
